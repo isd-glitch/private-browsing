@@ -15,6 +15,7 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            transition: background 1s ease-in-out;
         }
         
         .browser-header {
@@ -164,6 +165,24 @@
             height: 100%;
             border: none;
         }
+        
+        .bookmark-button {
+            margin-top: 10px;
+            padding: 5px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .bookmark-button:hover {
+            background-color: #45a049;
+        }
+
+        .bookmark-list {
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -190,10 +209,46 @@
         </div>
     </div>
 
+    <input type="file" id="wallpaperInput" accept="image/*" style="margin: 10px;">
+    <input type="color" id="color1" value="#ff0000" style="margin: 10px;">
+    <input type="color" id="color2" value="#0000ff" style="margin: 10px;">
+    <button id="addBookmarkButton" class="bookmark-button">Add Bookmark</button>
+    <div id="bookmarkList" class="bookmark-list"></div>
+
     <script>
         let tabCounter = 1;
         let activeTabId = "tab1";
-        
+        let bookmarks = [];
+
+        // 壁紙変更機能
+        function changeWallpaper(url) {
+            document.body.style.backgroundImage = `url('${url}')`;
+        }
+
+        document.getElementById("wallpaperInput").addEventListener("change", function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function() {
+                    changeWallpaper(reader.result);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 色合い変更機能（グラデーション）
+        function changeGradient(color1, color2) {
+            document.body.style.background = `linear-gradient(${color1}, ${color2})`;
+        }
+
+        document.getElementById("color1").addEventListener("input", function() {
+            changeGradient(this.value, document.getElementById("color2").value);
+        });
+
+        document.getElementById("color2").addEventListener("input", function() {
+            changeGradient(document.getElementById("color1").value, this.value);
+        });
+
         // タブを追加する関数
         function addNewTab() {
             tabCounter++;
@@ -283,29 +338,7 @@
                 closeTab(tabElement.dataset.tabId);
             });
         }
-        
-        // アドレスバーのイベントリスナー
-        document.getElementById("addressInput").addEventListener("keydown", function(e) {
-            if (e.key === "Enter") {
-                const url = this.value;
-                const activeIframe = document.querySelector(".iframe-container.active iframe");
-                
-                // URLの検証と修正
-                let finalUrl = url;
-                if (!url.startsWith("http://") && !url.startsWith("https://")) {
-                    finalUrl = "https://" + url;
-                }
-                
-                // iframeのソースを更新
-                activeIframe.src = finalUrl;
-                
-                // タブのタイトルを更新
-                const activeTab = document.querySelector(".tab.active .tab-title");
-                const domain = new URL(finalUrl).hostname.replace("www.", "");
-                activeTab.textContent = domain;
-            }
-        });
-        
+
         // 戻るボタン
         document.getElementById("backButton").addEventListener("click", function() {
             const activeIframe = document.querySelector(".iframe-container.active iframe");
@@ -329,6 +362,39 @@
         
         // 初期タブのイベントリスナーを設定
         setTabEventListeners(document.querySelector(".tab"));
+        
+        // ブックマーク追加機能
+        function addBookmark() {
+            const activeIframe = document.querySelector(".iframe-container.active iframe");
+            const url = activeIframe.src;
+            if (!bookmarks.includes(url)) {
+                bookmarks.push(url);
+                localStorage.setItem("bookmarks", JSON.stringify(bookmarks));
+                displayBookmarks();
+            }
+        }
+
+        function displayBookmarks() {
+            const bookmarkList = document.getElementById("bookmarkList");
+            bookmarkList.innerHTML = "";
+            bookmarks.forEach(url => {
+                const bookmarkButton = document.createElement("button");
+                bookmarkButton.innerText = url;
+                bookmarkButton.addEventListener("click", function() {
+                    const activeIframe = document.querySelector(".iframe-container.active iframe");
+                    activeIframe.src = url;
+                });
+                bookmarkList.appendChild(bookmarkButton);
+            });
+        }
+
+        document.getElementById("addBookmarkButton").addEventListener("click", addBookmark);
+
+        // ブックマークの読み込み
+        window.addEventListener("load", function() {
+            bookmarks = JSON.parse(localStorage.getItem("bookmarks")) || [];
+            displayBookmarks();
+        });
     </script>
 </body>
 </html>
