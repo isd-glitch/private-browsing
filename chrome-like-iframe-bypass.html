@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Browser Simulator</title>
+    <style type="text/css">
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        
+        body {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .browser-header {
+            background-color: #f1f3f4;
+            border-bottom: 1px solid #dadce0;
+            padding: 8px;
+        }
+        
+        .tabs-container {
+            display: flex;
+            align-items: center;
+            height: 40px;
+            overflow-x: auto;
+        }
+        
+        .tab {
+            display: flex;
+            align-items: center;
+            min-width: 180px;
+            max-width: 240px;
+            height: 36px;
+            background-color: #dee1e6;
+            border-radius: 8px 8px 0 0;
+            margin-right: 4px;
+            padding: 0 15px;
+            position: relative;
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .tab.active {
+            background-color: #fff;
+        }
+        
+        .tab-title {
+            flex-grow: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 13px;
+        }
+        
+        .close-tab {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 18px;
+            margin-left: 8px;
+            cursor: pointer;
+        }
+        
+        .close-tab:hover {
+            background-color: #dadce0;
+        }
+        
+        .new-tab {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+        }
+        
+        .new-tab:hover {
+            background-color: #dadce0;
+        }
+        
+        .address-bar {
+            display: flex;
+            height: 40px;
+            padding: 8px;
+            align-items: center;
+        }
+        
+        .address-input {
+            flex-grow: 1;
+            height: 36px;
+            border-radius: 20px;
+            border: 1px solid #dadce0;
+            background-color: #f1f3f4;
+            padding: 0 16px;
+            font-size: 14px;
+            outline: none;
+        }
+        
+        .address-input:focus {
+            background-color: #fff;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .navigation-buttons {
+            display: flex;
+            margin-right: 10px;
+        }
+        
+        .nav-button {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            color: #5f6368;
+        }
+        
+        .nav-button:hover {
+            background-color: #dadce0;
+        }
+        
+        .nav-button.disabled {
+            color: #bdc1c6;
+            cursor: default;
+        }
+        
+        .nav-button.disabled:hover {
+            background-color: transparent;
+        }
+        
+        .main-content {
+            flex-grow: 1;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .iframe-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+        }
+        
+        .iframe-container.active {
+            display: block;
+        }
+        
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="browser-header">
+        <div class="tabs-container" id="tabsContainer">
+            <div class="tab active" data-tab-id="tab1">
+                <span class="tab-title">Google</span>
+                <span class="close-tab">×</span>
+            </div>
+            <div class="new-tab" id="newTabButton">+</div>
+        </div>
+        <div class="address-bar">
+            <div class="navigation-buttons">
+                <div class="nav-button" id="backButton">←</div>
+                <div class="nav-button" id="forwardButton">→</div>
+                <div class="nav-button" id="refreshButton">↻</div>
+            </div>
+            <input type="text" class="address-input" id="addressInput" value="https://www.google.com?igu=1" placeholder="Search Google or type a URL">
+        </div>
+    </div>
+    <div class="main-content" id="mainContent">
+        <div class="iframe-container active" id="tab1">
+            <iframe src="https://www.google.com?igu=1" frameborder="0" id="iframe1"></iframe>
+        </div>
+    </div>
+
+    <script>
+        let tabCounter = 1;
+        let activeTabId = "tab1";
+        
+        // タブを追加する関数
+        function addNewTab() {
+            tabCounter++;
+            const tabId = "tab" + tabCounter;
+            const iframeId = "iframe" + tabCounter;
+            
+            // タブ要素を作成
+            const newTab = document.createElement("div");
+            newTab.className = "tab";
+            newTab.dataset.tabId = tabId;
+            newTab.innerHTML = `
+                <span class="tab-title">New Tab</span>
+                <span class="close-tab">×</span>
+            `;
+            
+            // タブをタブコンテナに追加
+            const tabsContainer = document.getElementById("tabsContainer");
+            tabsContainer.insertBefore(newTab, document.getElementById("newTabButton"));
+            
+            // iframe要素を作成
+            const newIframe = document.createElement("div");
+            newIframe.className = "iframe-container";
+            newIframe.id = tabId;
+            newIframe.innerHTML = `<iframe src="https://www.google.com?igu=1" frameborder="0" id="${iframeId}"></iframe>`;
+            
+            // iframeをコンテナに追加
+            document.getElementById("mainContent").appendChild(newIframe);
+            
+            // 新しいタブをアクティブにする
+            switchTab(tabId);
+            
+            // イベントリスナーを設定
+            setTabEventListeners(newTab);
+        }
+        
+        // タブを切り替える関数
+        function switchTab(tabId) {
+            // 現在アクティブなタブとiframeを非アクティブにする
+            document.querySelector(".tab.active").classList.remove("active");
+            document.querySelector(".iframe-container.active").classList.remove("active");
+            
+            // 新しいタブとiframeをアクティブにする
+            document.querySelector(`.tab[data-tab-id="${tabId}"]`).classList.add("active");
+            document.getElementById(tabId).classList.add("active");
+            
+            // アクティブなタブIDを更新
+            activeTabId = tabId;
+            
+            // アドレスバーを更新
+            const iframe = document.getElementById(tabId).querySelector("iframe");
+            document.getElementById("addressInput").value = iframe.src;
+        }
+        
+        // タブを閉じる関数
+        function closeTab(tabId) {
+            const tab = document.querySelector(`.tab[data-tab-id="${tabId}"]`);
+            const iframeContainer = document.getElementById(tabId);
+            
+            // タブとiframeを削除
+            tab.remove();
+            iframeContainer.remove();
+            
+            // タブがすべて閉じられた場合、新しいタブを作成
+            if (document.querySelectorAll(".tab").length === 0) {
+                addNewTab();
+            } 
+            // 閉じたタブがアクティブだった場合、最初のタブをアクティブにする
+            else if (tabId === activeTabId) {
+                const firstTab = document.querySelector(".tab");
+                switchTab(firstTab.dataset.tabId);
+            }
+        }
+        
+        // タブのイベントリスナーを設定する関数
+        function setTabEventListeners(tabElement) {
+            // タブをクリックしたときの処理
+            tabElement.addEventListener("click", function(e) {
+                if (!e.target.classList.contains("close-tab")) {
+                    switchTab(this.dataset.tabId);
+                }
+            });
+            
+            // 閉じるボタンをクリックしたときの処理
+            const closeButton = tabElement.querySelector(".close-tab");
+            closeButton.addEventListener("click", function(e) {
+                e.stopPropagation();
+                closeTab(tabElement.dataset.tabId);
+            });
+        }
+        
+        // アドレスバーのイベントリスナー
+        document.getElementById("addressInput").addEventListener("keydown", function(e) {
+            if (e.key === "Enter") {
+                const url = this.value;
+                const activeIframe = document.querySelector(".iframe-container.active iframe");
+                
+                // URLの検証と修正
+                let finalUrl = url;
+                if (!url.startsWith("http://") && !url.startsWith("https://")) {
+                    finalUrl = "https://" + url;
+                }
+                
+                // iframeのソースを更新
+                activeIframe.src = finalUrl;
+                
+                // タブのタイトルを更新
+                const activeTab = document.querySelector(".tab.active .tab-title");
+                const domain = new URL(finalUrl).hostname.replace("www.", "");
+                activeTab.textContent = domain;
+            }
+        });
+        
+        // 戻るボタン
+        document.getElementById("backButton").addEventListener("click", function() {
+            const activeIframe = document.querySelector(".iframe-container.active iframe");
+            activeIframe.contentWindow.history.back();
+        });
+        
+        // 進むボタン
+        document.getElementById("forwardButton").addEventListener("click", function() {
+            const activeIframe = document.querySelector(".iframe-container.active iframe");
+            activeIframe.contentWindow.history.forward();
+        });
+        
+        // 更新ボタン
+        document.getElementById("refreshButton").addEventListener("click", function() {
+            const activeIframe = document.querySelector(".iframe-container.active iframe");
+            activeIframe.src = activeIframe.src;
+        });
+        
+        // 新しいタブボタン
+        document.getElementById("newTabButton").addEventListener("click", addNewTab);
+        
+        // 初期タブのイベントリスナーを設定
+        setTabEventListeners(document.querySelector(".tab"));
+    </script>
+</body>
+</html>
